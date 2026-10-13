@@ -253,7 +253,7 @@ svg text.sm{font-size:8.5px}
     <div class="sechead"><h2>Canal tradicional</h2><p class="sub">Solicitudes, aprobaciones y cierres del canal tradicional, según el reporte mensual de Santander. Agosto cubre del 21 al 31 y octubre llega hasta el corte.</p></div>
     <div class="frow" id="trMonths" role="group" aria-label="Periodo"></div>
     <div class="panel"><h3>Funnel principal</h3><div class="funnel" id="trFunnel"></div></div>
-    <div class="panel"><h3>Leads por alianza</h3><div class="tw" id="trAli"></div><div class="note" id="trNote"></div></div>
+    <div class="panel"><h3>Leads por alianza</h3><div class="tw" id="trAli"></div></div>
   </section>
 
   <div class="defs">
@@ -561,23 +561,21 @@ function tVal(a){ const ks=tMonth==='all'?['Ago','Sep','Oct']:[tMonth]; return k
 $('#trMonths').addEventListener('click',e=>{ const b=e.target.closest('[data-m]'); if(!b) return; tMonth=b.dataset.m; rTrad(); });
 function rTrad(){
   $('#trMonths').innerHTML = TMO.map(([k,l])=>`<button type="button" class="chip" data-m="${k}" aria-pressed="${tMonth===k}">${l}</button>`).join('');
-  const list = F.al.size ? AL.filter(a=>F.al.has(a)) : AL;
+  const list = (F.al.size ? AL.filter(a=>F.al.has(a)) : AL).filter(a=>a!=='BYD');
   const V = list.map(a=>[a,tVal(a)]);
   const s = V.reduce((o,[,v])=>({sol:o.sol+v.sol,apr:o.apr+v.apr,cie:o.cie+v.cie}),{sol:0,apr:0,cie:0});
   const per = TMO.find(x=>x[0]===tMonth)[1];
-  if(!s.sol){ $('#trFunnel').innerHTML='<div class="empty">Sin solicitudes en el periodo seleccionado</div>'; $('#trAli').innerHTML=''; $('#trNote').textContent=''; return; }
+  if(!s.sol){ $('#trFunnel').innerHTML='<div class="empty">Sin solicitudes en el periodo seleccionado</div>'; $('#trAli').innerHTML=''; return; }
   const row=(nm,df,v,sm,w,cv)=>`<div class="fr"><div class="nm">${nm}<span class="df">${df}</span></div><div class="tr"><div class="bar" data-tip="${nm}: ${v}" style="width:${Math.max(Math.min(w,100),0)*0.78}%"></div><div class="v">${fmt(v)}<small>${sm}</small></div></div><div class="cv">${cv}</div></div>`;
   $('#trFunnel').innerHTML =
     row('Solicitudes','Canal tradicional · '+per,s.sol,'100%',100,'Base del funnel')+
     row('Aprobaciones','Solicitudes aprobadas',s.apr,pct(s.apr,s.sol),s.apr/s.sol*100,`<b>${pct(s.apr,s.sol)}</b> de las solicitudes`)+
     row('Cierres','Operaciones cerradas',s.cie,pct(s.cie,s.sol),s.cie/s.sol*100,`<b>${pct(s.cie,s.apr)}</b> de las aprobaciones`);
   let h=`<table><thead><tr><th>Alianza</th><th class="r">Solicitudes</th><th class="r">% total</th><th class="r">Aprobaciones</th><th class="r">% de solicitudes</th><th class="r">Cierres</th><th class="r">% de aprobaciones</th><th class="r">Cierres / solicitudes</th></tr></thead><tbody>`;
-  let over=false;
-  V.forEach(([a,v])=>{ if(v.cie>v.apr) over=true;
+    V.forEach(([a,v])=>{
     h+=`<tr><td class="nw">${alDot(a)}</td><td class="r num">${v.sol}</td><td class="r num">${pct(v.sol,s.sol)}</td><td class="r num">${v.apr}</td><td class="r num">${pct(v.apr,v.sol)}</td><td class="r num">${v.cie}</td><td class="r num">${pct(v.cie,v.apr)}</td><td class="r num">${pct(v.cie,v.sol)}</td></tr>`; });
   h+=`<tr class="tot"><td>Total</td><td class="r num">${s.sol}</td><td class="r num">100%</td><td class="r num">${s.apr}</td><td class="r num">${pct(s.apr,s.sol)}</td><td class="r num">${s.cie}</td><td class="r num">${pct(s.cie,s.apr)}</td><td class="r num">${pct(s.cie,s.sol)}</td></tr></tbody></table>`;
   $('#trAli').innerHTML=h;
-  $('#trNote').textContent = '' + (over?' Donde los cierres superan a las aprobaciones, el reporte los cuenta por separado dentro del mes.':'');
 }
 
 function render(){
